@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:arkit_plugin/arkit_node.dart';
 import 'package:arkit_plugin/geometries/arkit_anchor.dart';
 import 'package:arkit_plugin/geometries/arkit_box.dart';
@@ -11,18 +13,18 @@ import 'package:arkit_plugin/geometries/arkit_sphere.dart';
 import 'package:arkit_plugin/geometries/arkit_text.dart';
 import 'package:arkit_plugin/geometries/arkit_torus.dart';
 import 'package:arkit_plugin/geometries/arkit_tube.dart';
+import 'package:arkit_plugin/hit/arkit_hit_test_result.dart';
 import 'package:arkit_plugin/hit/arkit_node_pan_result.dart';
 import 'package:arkit_plugin/hit/arkit_node_pinch_result.dart';
 import 'package:arkit_plugin/light/arkit_light_estimate.dart';
 import 'package:arkit_plugin/utils/matrix4_utils.dart';
-import 'package:arkit_plugin/widget/arkit_arplane_detection.dart';
 import 'package:arkit_plugin/utils/vector_utils.dart';
-import 'package:arkit_plugin/hit/arkit_hit_test_result.dart';
+import 'package:arkit_plugin/widget/arkit_arplane_detection.dart';
 import 'package:arkit_plugin/widget/arkit_configuration.dart';
 import 'package:arkit_plugin/widget/arkit_world_alignment.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 typedef ARKitPluginCreatedCallback = void Function(ARKitController controller);
@@ -48,7 +50,9 @@ class ARKitSceneView extends StatefulWidget {
     this.showWorldOrigin = false,
     this.planeDetection = ARPlaneDetection.none,
     this.detectionImagesGroupName,
+    this.detectionImages,
     this.trackingImagesGroupName,
+    this.trackingImages,
     this.forceUserTapOnCenter = false,
     this.worldAlignment = ARWorldAlignment.gravity,
     this.debug = false,
@@ -110,7 +114,19 @@ class ARKitSceneView extends StatefulWidget {
   /// Images to detect in the scene.
   /// If set the session will attempt to detect the specified images.
   /// When an image is detected an ARImageAnchor will be added to the session.
+  /// Key is a name of the image, value is a Map where the key is a physical width and value is image byte array representation;
+  final Map<String, Map<double, Uint8List>> detectionImages;
+
+  /// Images to detect in the scene.
+  /// If set the session will attempt to detect the specified images.
+  /// When an image is detected an ARImageAnchor will be added to the session.
   final String trackingImagesGroupName;
+
+  /// Images to detect in the scene.
+  /// If set the session will attempt to detect the specified images.
+  /// When an image is detected an ARImageAnchor will be added to the session.
+  /// Key is a name of the image, value is a Map where the key is a physical width and value is image byte array representation;
+  final Map<String, Map<double, Uint8List>> trackingImages;
 
   /// When set every user tap will be processed like user tapped on the center of the screen.
   /// The default is false.
@@ -155,7 +171,9 @@ class _ARKitSceneViewState extends State<ARKitSceneView> {
       widget.planeDetection,
       widget.worldAlignment,
       widget.detectionImagesGroupName,
+      widget.detectionImages,
       widget.trackingImagesGroupName,
+      widget.trackingImages,
       widget.forceUserTapOnCenter,
       widget.debug,
     ));
@@ -180,7 +198,9 @@ class ARKitController {
     ARPlaneDetection planeDetection,
     ARWorldAlignment worldAlignment,
     String detectionImagesGroupName,
+    Map<String, Map<double, Uint8List>> detectionImages,
     String trackingImagesGroupName,
+    Map<String, Map<double, Uint8List>> trackingImages,
     bool forceUserTapOnCenter,
     this.debug,
   ) {
@@ -197,7 +217,9 @@ class ARKitController {
       'showFeaturePoints': showFeaturePoints,
       'showWorldOrigin': showWorldOrigin,
       'detectionImagesGroupName': detectionImagesGroupName,
+      'detectionImages': detectionImages,
       'trackingImagesGroupName': trackingImagesGroupName,
+      'trackingImages': trackingImages,
       'forceUserTapOnCenter': forceUserTapOnCenter,
       'worldAlignment': worldAlignment.index,
     });

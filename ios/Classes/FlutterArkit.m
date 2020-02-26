@@ -160,6 +160,15 @@
             if ([detectionImages isKindOfClass:[NSString class]]) {
                 worldTrackingConfiguration.detectionImages = [ARReferenceImage referenceImagesInGroupNamed:detectionImages bundle:nil];
             }
+            NSDictionary* images = params[@"detectionImages"];
+            if ([images isKindOfClass:[NSDictionary class]]) {
+                NSArray *detectionImagesArray = [self getARReferenceImagesFromDict: images];
+                NSMutableArray *detectionImages = [[NSMutableArray alloc] initWithArray:detectionImagesArray];
+                NSMutableSet *detectionImagesSet = [[NSMutableSet alloc] init];
+                [detectionImagesSet addObjectsFromArray:worldTrackingConfiguration.detectionImages.allObjects];
+                [detectionImagesSet addObjectsFromArray:detectionImages];
+                worldTrackingConfiguration.detectionImages = detectionImagesSet;
+            }
             _configuration = worldTrackingConfiguration;
         }
 #if REQUIRE_TRUEDEPTH_API
@@ -175,6 +184,15 @@
             NSString* trackingImages = params[@"trackingImagesGroupName"];
             if ([trackingImages isKindOfClass:[NSString class]]) {
                 imageTrackingConfiguration.trackingImages = [ARReferenceImage referenceImagesInGroupNamed:trackingImages bundle:nil];
+            }
+            NSDictionary* images = params[@"trackingImages"];
+            if ([images isKindOfClass:[NSDictionary class]]) {
+                NSArray *detectionImagesArray = [self getARReferenceImagesFromDict: images];
+                NSMutableArray *trackingImages = [[NSMutableArray alloc] initWithArray:detectionImagesArray];
+                NSMutableSet *detectionImagesSet = [[NSMutableSet alloc] init];
+                [detectionImagesSet addObjectsFromArray:imageTrackingConfiguration.trackingImages.allObjects];
+                [detectionImagesSet addObjectsFromArray:trackingImages];
+                imageTrackingConfiguration.trackingImages = detectionImagesSet;
             }
             _configuration = imageTrackingConfiguration;
         }
@@ -575,6 +593,22 @@
         [dict setValue:[CodableUtils convertARAnchorToDictionary:result.anchor] forKey:@"anchor"];
     }
     return dict;
+}
+
+- (NSArray*) getARReferenceImagesFromDict: (NSDictionary*)dict {
+    NSMutableArray *images = [[NSMutableArray alloc] init];
+    for (NSString *key in dict) {
+        NSDictionary *imageOptions = dict[key];
+        NSNumber *physicalWidth = [imageOptions allKeys].firstObject;
+        FlutterStandardTypedData *typedData = imageOptions[physicalWidth];
+        NSData *imageData = [typedData data];
+        struct CGImage *cgImage = [UIImage imageWithData:imageData].CGImage;
+        ARReferenceImage *arImage = [[ARReferenceImage alloc] initWithCGImage:cgImage orientation:kCGImagePropertyOrientationUp physicalWidth:physicalWidth.doubleValue];
+        [arImage setName:key];
+        [images addObject:arImage];
+    }
+
+    return images;
 }
 
 @end
